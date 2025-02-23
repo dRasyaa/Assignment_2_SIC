@@ -1,13 +1,8 @@
-################################# ESP32 PART #################################
 from machine import Pin, I2C
 import dht
 import time
 from ssd1306 import SSD1306_I2C
 
-################################# FLASK PART #################################
-from flask import Flask, request, jsonify
-from statistics import mean
-from datetime import datetime
 
 
 def init_oled():
@@ -83,29 +78,3 @@ def main():
         display_oled(temp, hum)
         control_led(temp)
         time.sleep(5)
-
-if __name__ == "__main__":
-    main()
-
-app = Flask(__name__)
-
-sensor_data = {"temperature" : None, "humidity" : None}
-
-@app.route('/ESP32/sensor', methods= ['POST'])
-def receive_data():
-    data = request.get_json()
-    if not data or 'temperature' not in data or 'humidity' not in data:
-        return jsonify({"error" : "Invalid Data!"}), 400
-    
-    temperature = data["temperature"]
-    humidity = data["humidity"]
-
-    sensor_data["temperature"] = temperature
-    sensor_data["humidity"] = humidity
-
-    print(f"Received Data : Temp={temperature}, Hum={humidity}")
-
-    return jsonify({"message" : "Data received", "data" : data}), 200
-
-if __name__ == '__main__':
-    app.run(debug=True)
