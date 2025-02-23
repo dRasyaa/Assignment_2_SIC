@@ -134,7 +134,7 @@ URL_SERVER =
 
 # Fungsi utama
 def main():
-    global motion_count, temp_readings, hum_readings
+    global motion_count, temp_readings, hum_readings,led
     if not connect_wifi():
         print("WiFi connection failed. Please check credentials.")
         return
@@ -162,13 +162,13 @@ def main():
 # Cek sensor PIR
         if pir_sensor.value() == 1:
             print("Motion detected! Turning LED ON")
-            led.value(1)
+            led_hijau.value(0)
             motion_count += 1  # Tambah counter deteksi gerakan
             send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
             temp_readings.clear()
             hum_readings.clear()
             time.sleep(2)  # LED nyala selama 2 detik
-            led.value(0)
+            led_hijau.value(1)
             print("LED OFF")
         else:
             send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
