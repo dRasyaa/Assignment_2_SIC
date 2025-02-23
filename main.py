@@ -129,6 +129,9 @@ def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
     except Exception as e:
         print("Failed to send data:", e)
 
+# Kirim data ke MongoDB
+URL_SERVER = 
+
 # Fungsi utama
 def main():
     global motion_count, temp_readings, hum_readings
