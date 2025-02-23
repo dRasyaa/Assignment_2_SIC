@@ -130,7 +130,10 @@ def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
         print("Failed to send data:", e)
 
 # Kirim data ke MongoDB
-URL_SERVER = 
+URL_SERVER = 'http://172.16.1.226:8000/sensor_data'
+def send_data_to_mongo(payload):
+    response = urequest.post(URL_SERVER, json = payload, headers = HEADERS)
+    print('Mongo response:',response.text)
 
 # Fungsi utama
 def main():
@@ -158,8 +161,7 @@ def main():
 
         avg_temp = sum(temp_readings) / len(temp_readings) if temp_readings else None
         avg_hum = sum(hum_readings) / len(hum_readings) if hum_readings else None
-        
-# Cek sensor PIR
+       
         if pir_sensor.value() == 1:
             print("Motion detected! Turning LED ON")
             led_hijau.value(0)
@@ -176,6 +178,11 @@ def main():
         send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
 
         display_oled(temp, hum, motion_count)
-        
+
+        payload={
+            'Temperature':temp,
+            'Humidity':hum
+        }
+        send_data_to_mongo(payload)
 
         time.sleep(2)

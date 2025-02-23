@@ -4,7 +4,7 @@ from pymongo.server_api import ServerApi
 
 app = Flask(__name__)
 
-# MongoDB
+# # MongoDB
 uri = "mongodb+srv://denivo:kqYYBdBp69F0jYQ5@assignment2sic.58tod.mongodb.net/?retryWrites=true&w=majority&appName=Assignment2SIC"
 
 client = MongoClient(uri, server_api=ServerApi('1'))
@@ -22,7 +22,7 @@ collection = db['SensorData']
 
 
 # Flask
-@app.route('/ESP32', methods = ['POST'])
+@app.route('/sensor_data', methods = ['POST'])
 def collect_data():
     data = request.json
 
