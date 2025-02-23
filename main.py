@@ -174,9 +174,5 @@ def main():
 
         display_oled(temp, hum, motion_count)
         
+
         time.sleep(2)
-
-
-if __name__ == "__main__":
-    main()
-
