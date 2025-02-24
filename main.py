@@ -16,6 +16,31 @@ UBIDOTS_TOKEN = "BBUS-7FWNuir6VymmrrgbRLe6E8pYyaYHQZ"
 DEVICE_LABEL = "esp32rhakatest"
 UBIDOTS_URL = f"http://industrial.api.ubidots.com/api/v1.6/devices/{DEVICE_LABEL}/"
 
+# Fungsi koneksi ke WiFi
+def connect_wifi():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(WIFI_SSID, WIFI_PASS)
+    
+    for _ in range(10):  # Tambah waktu koneksi hingga 10 percobaan
+        if wlan.isconnected():
+            print("Connected to WiFi! IP Address:", wlan.ifconfig()[0])
+            return True
+        time.sleep(1)
+    
+    print("Failed to connect to WiFi")
+    return False
+
+# Cek DNS
+def check_dns():
+    try:
+        addr = socket.getaddrinfo("industrial.api.ubidots.com", 80)
+        print("DNS Resolution Success:", addr)
+        return True
+    except Exception as e:
+        print("DNS Resolution Failed:", e)
+        return False
+
 # Inisialisasi I2C untuk OLED
 def init_oled():
     try:
@@ -47,30 +72,6 @@ motion_count = 0
 temp_readings = []
 hum_readings = []
 
-# Fungsi koneksi ke WiFi
-def connect_wifi():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(WIFI_SSID, WIFI_PASS)
-    
-    for _ in range(10):  # Tambah waktu koneksi hingga 10 percobaan
-        if wlan.isconnected():
-            print("Connected to WiFi! IP Address:", wlan.ifconfig()[0])
-            return True
-        time.sleep(1)
-    
-    print("Failed to connect to WiFi")
-    return False
-
-# Cek DNS
-def check_dns():
-    try:
-        addr = socket.getaddrinfo("industrial.api.ubidots.com", 80)
-        print("DNS Resolution Success:", addr)
-        return True
-    except Exception as e:
-        print("DNS Resolution Failed:", e)
-        return False
 
 # Fungsi baca suhu & kelembaban
 def read_dht11():
@@ -105,7 +106,7 @@ def display_oled(temp, hum, motion_count):
 
 # Fungsi kirim data ke Ubidots
 def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
-    headers = {
+    HEADER = {
         "X-Auth-Token": UBIDOTS_TOKEN,
         "Content-Type": "application/json"
     }
@@ -122,18 +123,12 @@ def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
 
     try:
         print("Sending data to Ubidots:", data)
-        response = requests.post(UBIDOTS_URL, json=data, headers=headers)
+        response = requests.post(UBIDOTS_URL, json=data, headers=HEADER)
         print("Response Status Code:", response.status_code)
         print("Response Text:", response.text)
         response.close()
     except Exception as e:
         print("Failed to send data:", e)
-
-# Kirim data ke MongoDB
-URL_SERVER = 'http://172.16.1.226:8000/sensor_data'
-def send_data_to_mongo(payload):
-    response = urequest.post(URL_SERVER, json = payload, headers = HEADERS)
-    print('Mongo response:',response.text)
 
 # Fungsi utama
 def main():
@@ -151,7 +146,7 @@ def main():
 
         if temp is not None:
             temp_readings.append(temp)
-            if temp > 25:
+            if temp > 24:
                 led_merah.value(0)  # LED merah menyala jika suhu > 23°C
             else:
                 led_merah.value(1)  # LED merah mati jika suhu <= 23°C
@@ -161,7 +156,8 @@ def main():
 
         avg_temp = sum(temp_readings) / len(temp_readings) if temp_readings else None
         avg_hum = sum(hum_readings) / len(hum_readings) if hum_readings else None
-       
+        
+        # Cek sensor PIR
         if pir_sensor.value() == 1:
             print("Motion detected! Turning LED ON")
             led_hijau.value(0)
@@ -176,13 +172,9 @@ def main():
             send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
         
         send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
-
         display_oled(temp, hum, motion_count)
-
-        payload={
-            'Temperature':temp,
-            'Humidity':hum
-        }
-        send_data_to_mongo(payload)
-
         time.sleep(2)
+
+
+if __name__ == "__main__":
+    main()
