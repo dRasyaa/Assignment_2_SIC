@@ -13,8 +13,9 @@ WIFI_PASS = "diklat2024!!"
 
 # Konfigurasi Ubidots
 UBIDOTS_TOKEN = "BBUS-7FWNuir6VymmrrgbRLe6E8pYyaYHQZ"
-DEVICE_LABEL = "esp32rhakatest"
+DEVICE_LABEL = "esp32semen1roda"
 UBIDOTS_URL = f"http://industrial.api.ubidots.com/api/v1.6/devices/{DEVICE_LABEL}/"
+UBIDOTS_CONTROL_VAR = "sensor_control"  # Nama variabel di Ubidots untuk kontrol
 
 # Fungsi koneksi ke WiFi
 def connect_wifi():
@@ -71,7 +72,41 @@ led_merah.value(1)  # Awalnya LED merah mati
 motion_count = 0
 temp_readings = []
 hum_readings = []
+sensor_enabled = False  # Awalnya sensor mati
 
+
+# Fungsi koneksi ke WiFi
+def connect_wifi():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(WIFI_SSID, WIFI_PASS)
+    
+    for _ in range(10):
+        if wlan.isconnected():
+            print("Connected to WiFi! IP Address:", wlan.ifconfig()[0])
+            return True
+        time.sleep(1)
+    
+    print("Failed to connect to WiFi")
+    return False
+
+# Fungsi mendapatkan status kontrol sensor dari Ubidots
+def get_sensor_status():
+    global sensor_enabled
+    try:
+        response = requests.get(f"{UBIDOTS_URL}{UBIDOTS_CONTROL_VAR}/lv", headers={"X-Auth-Token": UBIDOTS_TOKEN})
+        if response.status_code == 200:
+            print("Raw response from Ubidots:", response.text)  # Debug respons sebelum parsing
+            try:
+                status = int(float(response.text.strip()))  # Jika berbentuk float, ubah ke int
+                sensor_enabled = bool(status)
+                print(f"Sensor status updated from Ubidots: {sensor_enabled}")
+            except ValueError:
+                print("Invalid response format, expected a number.")
+        response.close()
+    except Exception as e:
+        print("Error getting sensor status:", e)
+=======
 
 # Fungsi baca suhu & kelembaban
 def read_dht11():
@@ -103,6 +138,7 @@ def display_oled(temp, hum, motion_count):
         oled.show()
     else:
         print("OLED not initialized")
+
 
 
 # Fungsi kirim data ke Ubidots
@@ -157,18 +193,43 @@ def send_data_mongodb(temp, hum, avg_temp, avg_hum):
     except Exception as e:
         print("Failed to send data:", e)
 
+# Fungsi baca suhu & kelembaban
+def read_dht11():
+    if not sensor_enabled:
+        return None, None
+    
+    retries = 5
+    for _ in range(retries):
+        try:
+            time.sleep(2)
+            sensor.measure()
+            temp = sensor.temperature()
+            hum = sensor.humidity()
+            print(f"Temp: {temp}C, Humidity: {hum}%")
+            return temp, hum
+        except Exception as e:
+            print("DHT11 Error:", e)
+            time.sleep(1)
+    return None, None
+
+# Fungsi menampilkan data di OLED
+def display_oled(temp, hum, motion_count):
+    if oled and sensor_enabled:
+        oled.fill(0)
+        oled.text(f"Temp: {temp}C", 0, 0)
+        oled.text(f"Hum: {hum}%", 0, 10)
+        oled.text(f"Motion: {motion_count}", 0, 20)
+        oled.show()
+
 # Fungsi utama
 def main():
-    global motion_count, temp_readings, hum_readings,led
+    global motion_count, temp_readings, hum_readings
     if not connect_wifi():
         print("WiFi connection failed. Please check credentials.")
         return  
 
-    if not check_dns():
-        print("DNS resolution failed. Check internet connection.")
-        return
-
     while True:
+        get_sensor_status()
         temp, hum = read_dht11()
 
         if temp is not None:
@@ -184,19 +245,16 @@ def main():
         avg_temp = sum(temp_readings) / len(temp_readings) if temp_readings else None
         avg_hum = sum(hum_readings) / len(hum_readings) if hum_readings else None
         
+
         # Cek sensor PIR
+
         if pir_sensor.value() == 1:
             print("Motion detected! Turning LED ON")
             led_hijau.value(0)
-            motion_count += 1  # Tambah counter deteksi gerakan
-            send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
-            temp_readings.clear()
-            hum_readings.clear()
+            motion_count += 1
             time.sleep(2)  # LED nyala selama 2 detik
             led_hijau.value(1)
             print("LED OFF")
-        else:
-            send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
             
 
         send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
@@ -207,3 +265,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
