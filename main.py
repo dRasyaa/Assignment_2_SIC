@@ -128,11 +128,15 @@ def read_dht11():
 
 # Fungsi menampilkan data di OLED
 def display_oled(temp, hum, motion_count):
-    if oled and sensor_enabled:
+   if oled and sensor_enabled:
         oled.fill(0)
-        oled.text(f"Temp: {temp}C", 0, 0)
-        oled.text(f"Hum: {hum}%", 0, 10)
-        oled.text(f"Motion: {motion_count}", 0, 20)
+        oled.text("Semen 1 Roda", 10, 0, 1)  # Judul besar
+        oled.text("Temp:", 0, 16)
+        oled.text(f"{temp}C", 64, 16)
+        oled.text("Hum:", 0, 32)
+        oled.text(f"{hum}%", 64, 32)
+        oled.text("Motion:", 0, 48)
+        oled.text(f"{motion_count}", 64, 48)
         oled.show()
 
 # Fungsi utama
@@ -163,7 +167,7 @@ def main():
             print("Motion detected! Turning LED ON")
             led_hijau.value(0)
             motion_count += 1
-            time.sleep(2)  # LED nyala selama 2 detik
+            time.sleep(2)
             led_hijau.value(1)
             print("LED OFF")
         
