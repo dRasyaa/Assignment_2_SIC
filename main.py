@@ -104,6 +104,7 @@ def display_oled(temp, hum, motion_count):
     else:
         print("OLED not initialized")
 
+
 # Fungsi kirim data ke Ubidots
 def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
     HEADER = {
@@ -130,12 +131,38 @@ def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
     except Exception as e:
         print("Failed to send data:", e)
 
+
+#Kirim data ke MongoDB
+FLASK_URL = "http://172.16.1.226:8000/sensor_data"
+
+def send_data_mongodb(temp, hum, avg_temp, avg_hum):
+    HEADER = {
+        "Content-Type": "application/json"
+    }
+    
+    data = {}
+    if temp is not None:
+        data["temperature"] = {"value": temp}
+        data["average_temperature"] = {"value": avg_temp}
+    if hum is not None:
+        data["humidity"] = {"value": hum}
+        data["average_humidity"] = {"value": avg_hum}
+
+    try:
+        print("Sending data to MongoDB:", data)
+        response = requests.post(FLASK_URL, json=data, headers=HEADER)
+        print("Response Status Code:", response.status_code)
+        print("Response Text:", response.text)
+        response.close()
+    except Exception as e:
+        print("Failed to send data:", e)
+
 # Fungsi utama
 def main():
     global motion_count, temp_readings, hum_readings,led
     if not connect_wifi():
         print("WiFi connection failed. Please check credentials.")
-        return
+        return  
 
     if not check_dns():
         print("DNS resolution failed. Check internet connection.")
@@ -170,8 +197,10 @@ def main():
             print("LED OFF")
         else:
             send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
-        
+            
+
         send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
+        send_data_mongodb(temp, hum, avg_temp, avg_hum)
         display_oled(temp, hum, motion_count)
         time.sleep(2)
 

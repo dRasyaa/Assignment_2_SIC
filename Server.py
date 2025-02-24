@@ -5,7 +5,7 @@ from pymongo.server_api import ServerApi
 app = Flask(__name__)
 
 # # MongoDB
-uri = "mongodb+srv://denivo:kqYYBdBp69F0jYQ5@assignment2sic.58tod.mongodb.net/?retryWrites=true&w=majority&appName=Assignment2SIC"
+uri = "mongodb+srv://denivo:QNSmtASH7aPciM1U@assignment2sic.58tod.mongodb.net/?retryWrites=true&w=majority&appName=Assignment2SIC"
 
 client = MongoClient(uri, server_api=ServerApi('1'))
 
@@ -27,6 +27,7 @@ def collect_data():
     data = request.json
 
     collection.insert_one(data)
+    print('hello')
     return jsonify({"status": "success", "message": "Data saved"}),201
 
 if __name__ == '__main__':
