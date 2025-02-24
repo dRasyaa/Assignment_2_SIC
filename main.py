@@ -13,7 +13,7 @@ WIFI_PASS = "diklat2024!!"
 
 # Konfigurasi Ubidots
 UBIDOTS_TOKEN = "BBUS-7FWNuir6VymmrrgbRLe6E8pYyaYHQZ"
-DEVICE_LABEL = "esp32rhakatest"
+DEVICE_LABEL = "esp32semen1roda"
 UBIDOTS_URL = f"http://industrial.api.ubidots.com/api/v1.6/devices/{DEVICE_LABEL}/"
 
 # Inisialisasi I2C untuk OLED
@@ -145,7 +145,7 @@ def main():
 
         if temp is not None:
             temp_readings.append(temp)
-            if temp > 25:
+            if temp > 24:
                 led_merah.value(0)  # LED merah menyala jika suhu > 23°C
             else:
                 led_merah.value(1)  # LED merah mati jika suhu <= 23°C
@@ -174,5 +174,9 @@ def main():
 
         display_oled(temp, hum, motion_count)
         
-
         time.sleep(2)
+
+
+if __name__ == "__main__":
+    main()
+
