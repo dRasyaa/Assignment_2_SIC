@@ -6,10 +6,12 @@ import dht
 from machine import Pin, I2C
 from ssd1306 import SSD1306_I2C
 import socket
+from umqtt.simple import MQTTClient
+
 
 # Konfigurasi WiFi
-WIFI_SSID = "Balai_Diklat_Perpus"
-WIFI_PASS = "diklat2024!!"
+WIFI_SSID = "Hidden"
+WIFI_PASS = "denivorasya"
 
 # Konfigurasi Ubidots
 UBIDOTS_TOKEN = "BBUS-7FWNuir6VymmrrgbRLe6E8pYyaYHQZ"
@@ -75,21 +77,6 @@ hum_readings = []
 sensor_enabled = False  # Awalnya sensor mati
 
 
-# Fungsi koneksi ke WiFi
-def connect_wifi():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(WIFI_SSID, WIFI_PASS)
-    
-    for _ in range(10):
-        if wlan.isconnected():
-            print("Connected to WiFi! IP Address:", wlan.ifconfig()[0])
-            return True
-        time.sleep(1)
-    
-    print("Failed to connect to WiFi")
-    return False
-
 # Fungsi mendapatkan status kontrol sensor dari Ubidots
 def get_sensor_status():
     global sensor_enabled
@@ -106,39 +93,6 @@ def get_sensor_status():
         response.close()
     except Exception as e:
         print("Error getting sensor status:", e)
-=======
-
-# Fungsi baca suhu & kelembaban
-def read_dht11():
-    retries = 5
-    for _ in range(retries):
-        try:
-            time.sleep(2)
-            sensor.measure()
-            temp = sensor.temperature()
-            hum = sensor.humidity()
-            print(f"Temp: {temp}C, Humidity: {hum}%")
-            return temp, hum
-        except Exception as e:
-            print("DHT11 Error:", e)
-            time.sleep(1)
-    return None, None
-
-# Fungsi tampilkan data di OLED
-def display_oled(temp, hum, motion_count):
-    if oled:
-        oled.fill(0)
-        oled.text("ESP32 Sensor", 20, 0)
-        if temp is not None and hum is not None:
-            oled.text(f"Temp: {temp}C", 0, 20)
-            oled.text(f"Humidity: {hum}%", 0, 40)
-        else:
-            oled.text("DHT11 OFF", 0, 20)
-        oled.text(f"Motion: {motion_count}", 0, 55)
-        oled.show()
-    else:
-        print("OLED not initialized")
-
 
 
 # Fungsi kirim data ke Ubidots
@@ -169,26 +123,56 @@ def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
 
 
 #Kirim data ke MongoDB
-FLASK_URL = "http://172.16.1.226:1327/sensor_data"
+MQTT_BROKER = "broker.emqx.io"  # Bisa diganti dengan broker lain
+MQTT_TOPIC = "esp32/sensor"
 
-def send_mongo(temp, hum, avg_temp, avg_hum):
-    try:
-        payload = {
-            "Temperature": temp,
-            "Humidity":hum,
-            "Average Temperature":avg_temp,
-            "Average Humidity":avg_hum
-        }
 
-        HEADER = {
-            "Content-Type": "application/json"
-        }
+def send_data(temp, hum):
+    client = MQTTClient("ESP32", MQTT_BROKER)
+    client.connect()
 
-        response = requests.post(FLASK_URL, json=payload, headers=HEADER)
-        print('Mongo response:', response.text)
-    except Exception as e:
-        print('Failed to send data to MongoDB:', e)
+    data = {
+        "temperature": temp,
+        "humidity": hum
+    }
+    
+    json_data = ujson.dumps(data)
+    client.publish(MQTT_TOPIC, json_data)
+    print("Data dikirim:", json_data)
 
+    client.disconnect()
+
+# Fungsi baca suhu & kelembaban
+def read_dht11():
+    if not sensor_enabled:
+        return None, None
+    
+    retries = 5
+    for _ in range(retries):
+        try:
+            time.sleep(2)
+            sensor.measure()
+            temp = sensor.temperature()
+            hum = sensor.humidity()
+            print(f"Temp: {temp}C, Humidity: {hum}%")
+            return temp, hum
+        except Exception as e:
+            print("DHT11 Error:", e)
+            time.sleep(1)
+    return None, None
+
+# Fungsi menampilkan data di OLED
+def display_oled(temp, hum, motion_count):
+   if oled and sensor_enabled:
+        oled.fill(0)
+        oled.text("Semen 1 Roda", 10, 0, 1)  # Judul besar
+        oled.text("Temp:", 0, 16)
+        oled.text(f"{temp}C", 64, 16)
+        oled.text("Hum:", 0, 32)
+        oled.text(f"{hum}%", 64, 32)
+        oled.text("Motion:", 0, 48)
+        oled.text(f"{motion_count}", 64, 48)
+        oled.show()
 
 # Fungsi baca suhu & kelembaban
 def read_dht11():
@@ -259,7 +243,7 @@ def main():
             
 
         send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
-        send_mongo(temp, hum, avg_temp, avg_hum)
+        send_data(temp, hum)
         display_oled(temp, hum, motion_count)
         time.sleep(2)
 
