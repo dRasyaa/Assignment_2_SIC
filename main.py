@@ -6,10 +6,12 @@ import dht
 from machine import Pin, I2C
 from ssd1306 import SSD1306_I2C
 import socket
+from umqtt.simple import MQTTClient
+
 
 # Konfigurasi WiFi
-WIFI_SSID = "Balai_Diklat_Perpus"
-WIFI_PASS = "diklat2024!!"
+WIFI_SSID = "Hidden"
+WIFI_PASS = "denivorasya"
 
 # Konfigurasi Ubidots
 UBIDOTS_TOKEN = "BBUS-7FWNuir6VymmrrgbRLe6E8pYyaYHQZ"
@@ -72,6 +74,7 @@ motion_count = 0
 temp_readings = []
 hum_readings = []
 
+<<<<<<< Updated upstream
 
 # Fungsi baca suhu & kelembaban
 def read_dht11():
@@ -104,6 +107,24 @@ def display_oled(temp, hum, motion_count):
     else:
         print("OLED not initialized")
 
+=======
+# Fungsi mendapatkan status kontrol sensor dari Ubidots
+def get_sensor_status():
+    global sensor_enabled
+    try:
+        response = requests.get(f"{UBIDOTS_URL}{UBIDOTS_CONTROL_VAR}/lv", headers={"X-Auth-Token": UBIDOTS_TOKEN})
+        if response.status_code == 200:
+            print("Raw response from Ubidots:", response.text)  # Debug respons sebelum parsing
+            try:
+                status = int(float(response.text.strip()))  # Jika berbentuk float, ubah ke int
+                sensor_enabled = bool(status)
+                print(f"Sensor status updated from Ubidots: {sensor_enabled}")
+            except ValueError:
+                print("Invalid response format, expected a number.")
+        response.close()
+    except Exception as e:
+        print("Error getting sensor status:", e)
+>>>>>>> Stashed changes
 
 # Fungsi kirim data ke Ubidots
 def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
@@ -133,26 +154,24 @@ def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
 
 
 #Kirim data ke MongoDB
-FLASK_URL = "http://172.16.1.226:1327/sensor_data"
+MQTT_BROKER = "broker.emqx.io"  # Bisa diganti dengan broker lain
+MQTT_TOPIC = "esp32/sensor"
 
-def send_mongo(temp, hum, avg_temp, avg_hum):
-    try:
-        payload = {
-            "Temperature": temp,
-            "Humidity":hum,
-            "Average Temperature":avg_temp,
-            "Average Humidity":avg_hum
-        }
 
-        HEADER = {
-            "Content-Type": "application/json"
-        }
+def send_data(temp, hum):
+    client = MQTTClient("ESP32", MQTT_BROKER)
+    client.connect()
 
-        response = requests.post(FLASK_URL, json=payload, headers=HEADER)
-        print('Mongo response:', response.text)
-    except Exception as e:
-        print('Failed to send data to MongoDB:', e)
+    data = {
+        "temperature": temp,
+        "humidity": hum
+    }
+    
+    json_data = ujson.dumps(data)
+    client.publish(MQTT_TOPIC, json_data)
+    print("Data dikirim:", json_data)
 
+    client.disconnect()
 
 # Fungsi utama
 def main():
@@ -197,7 +216,7 @@ def main():
             
 
         send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
-        send_mongo(temp, hum, avg_temp, avg_hum)
+        send_data(temp, hum)
         display_oled(temp, hum, motion_count)
         time.sleep(2)
 
