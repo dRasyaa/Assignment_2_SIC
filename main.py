@@ -129,33 +129,30 @@ def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
         print("Response Text:", response.text)
         response.close()
     except Exception as e:
-        print("Failed to send data:", e)
+        print("Failed to send data to ubidots:", e)
 
 
 #Kirim data ke MongoDB
-FLASK_URL = "http://172.16.1.226:8000/sensor_data"
+FLASK_URL = "http://172.16.1.226:1327/sensor_data"
 
-def send_data_mongodb(temp, hum, avg_temp, avg_hum):
-    HEADER = {
-        "Content-Type": "application/json"
-    }
-    
-    data = {}
-    if temp is not None:
-        data["temperature"] = {"value": temp}
-        data["average_temperature"] = {"value": avg_temp}
-    if hum is not None:
-        data["humidity"] = {"value": hum}
-        data["average_humidity"] = {"value": avg_hum}
-
+def send_mongo(temp, hum, avg_temp, avg_hum):
     try:
-        print("Sending data to MongoDB:", data)
-        response = requests.post(FLASK_URL, json=data, headers=HEADER)
-        print("Response Status Code:", response.status_code)
-        print("Response Text:", response.text)
-        response.close()
+        payload = {
+            "Temperature": temp,
+            "Humidity":hum,
+            "Average Temperature":avg_temp,
+            "Average Humidity":avg_hum
+        }
+
+        HEADER = {
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(FLASK_URL, json=payload, headers=HEADER)
+        print('Mongo response:', response.text)
     except Exception as e:
-        print("Failed to send data:", e)
+        print('Failed to send data to MongoDB:', e)
+
 
 # Fungsi utama
 def main():
@@ -200,7 +197,7 @@ def main():
             
 
         send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
-        send_data_mongodb(temp, hum, avg_temp, avg_hum)
+        send_mongo(temp, hum, avg_temp, avg_hum)
         display_oled(temp, hum, motion_count)
         time.sleep(2)
 
