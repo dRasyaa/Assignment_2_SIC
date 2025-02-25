@@ -93,52 +93,7 @@ def get_sensor_status():
     except Exception as e:
         print("Error getting sensor status:", e)
 
-# Fungsi kirim data ke Ubidots
-def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
-    HEADER = {
-        "X-Auth-Token": UBIDOTS_TOKEN,
-        "Content-Type": "application/json"
-    }
-    
-    data = {}
-    if temp is not None:
-        data["temperature"] = {"value": temp}
-        data["average_temperature"] = {"value": avg_temp}
-    if hum is not None:
-        data["humidity"] = {"value": hum}
-        data["average_humidity"] = {"value": avg_hum}
-    
-    data["motion_count"] = {"value": motion_count}
 
-    try:
-        print("Sending data to Ubidots:", data)
-        response = requests.post(UBIDOTS_URL, json=data, headers=HEADER)
-        print("Response Status Code:", response.status_code)
-        print("Response Text:", response.text)
-        response.close()
-    except Exception as e:
-        print("Failed to send data to ubidots:", e)
-
-
-#Kirim data ke MongoDB
-MQTT_BROKER = "broker.emqx.io"  # Bisa diganti dengan broker lain
-MQTT_TOPIC = "esp32/sensor"
-
-
-def send_data(temp, hum):
-    client = MQTTClient("ESP32", MQTT_BROKER)
-    client.connect()
-
-    data = {
-        "temperature": temp,
-        "humidity": hum
-    }
-    
-    json_data = ujson.dumps(data)
-    client.publish(MQTT_TOPIC, json_data)
-    print("Data dikirim:", json_data)
-
-    client.disconnect()
 
 # Fungsi baca suhu & kelembaban
 def read_dht11():
@@ -171,6 +126,56 @@ def display_oled(temp, hum, motion_count):
         oled.text("Motion:", 0, 48)
         oled.text(f"{motion_count}", 64, 48)
         oled.show()
+
+
+# Fungsi kirim data ke Ubidots
+def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
+    HEADER = {
+        "X-Auth-Token": UBIDOTS_TOKEN,
+        "Content-Type": "application/json"
+    }
+    
+    data = {}
+    if temp is not None:
+        data["temperature"] = {"value": temp}
+        data["average_temperature"] = {"value": avg_temp}
+    if hum is not None:
+        data["humidity"] = {"value": hum}
+        data["average_humidity"] = {"value": avg_hum}
+    
+    data["motion_count"] = {"value": motion_count}
+
+    try:
+        print("Sending data to Ubidots:", data)
+        response = requests.post(UBIDOTS_URL, json=data, headers=HEADER)
+        print("Response Status Code:", response.status_code)
+        print("Response Text:", response.text)
+        response.close()
+    except Exception as e:
+        print("Failed to send data to ubidots:", e)
+
+
+#Kirim data ke MongoDB
+MQTT_BROKER = "broker.emqx.io"  # Bisa diganti dengan broker lain
+MQTT_TOPIC = "esp32/sensor"
+
+def send_data(temp, hum, avg_temp, avg_hum):
+    client = MQTTClient("ESP32", MQTT_BROKER)
+    client.connect()
+
+    data = {
+        "temperature": temp,
+        "humidity": hum,
+        "Average Temperature":avg_temp,
+        "Average Humidity":avg_hum,
+    }
+    
+    json_data = ujson.dumps(data)
+    client.publish(MQTT_TOPIC, json_data)
+    print("Data dikirim:", json_data)
+
+    client.disconnect()
+
 
 # Fungsi utama
 def main():
@@ -209,7 +214,7 @@ def main():
             
 
         send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count)
-        send_data(temp, hum)
+        send_data(temp, hum, avg_temp, avg_hum)
         display_oled(temp, hum, motion_count)
         time.sleep(2)
 
