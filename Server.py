@@ -15,7 +15,7 @@ try:
     print("Ping berhasil! Terkoneksi dengan MongoDB.")
 except Exception as e:
     print("Terjadi kesalahan:", e)  
-    
+
 # Database & Collection
 db = client['AssignmentDataBase']
 collection = db['SensorData']
@@ -31,4 +31,4 @@ def collect_data():
     return jsonify({"status": "success", "message": "Data saved"}),201
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5500)
+    app.run(host='0.0.0.0', debug=True, port=1327)
