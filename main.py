@@ -10,7 +10,7 @@ from umqtt.simple import MQTTClient
 
 
 # Konfigurasi WiFi
-WIFI_SSID = "Balai_diklat"
+WIFI_SSID = "Balai_diklat_perpus"
 WIFI_PASS = "diklat2024!!"
 
 # Konfigurasi Ubidots
