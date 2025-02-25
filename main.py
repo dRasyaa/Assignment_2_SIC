@@ -76,6 +76,7 @@ temp_readings = []
 hum_readings = []
 sensor_enabled = False  # Awalnya sensor mati
 
+
 # Fungsi mendapatkan status kontrol sensor dari Ubidots
 def get_sensor_status():
     global sensor_enabled
@@ -221,3 +222,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
