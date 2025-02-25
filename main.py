@@ -75,6 +75,7 @@ temp_readings = []
 hum_readings = []
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 # Fungsi baca suhu & kelembaban
 def read_dht11():
@@ -108,6 +109,8 @@ def display_oled(temp, hum, motion_count):
         print("OLED not initialized")
 
 =======
+=======
+>>>>>>> Stashed changes
 # Fungsi mendapatkan status kontrol sensor dari Ubidots
 def get_sensor_status():
     global sensor_enabled
@@ -124,6 +127,9 @@ def get_sensor_status():
         response.close()
     except Exception as e:
         print("Error getting sensor status:", e)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 # Fungsi kirim data ke Ubidots
@@ -156,7 +162,25 @@ def send_data_ubidots(temp, hum, avg_temp, avg_hum, motion_count):
 #Kirim data ke MongoDB
 MQTT_BROKER = "broker.emqx.io"  # Bisa diganti dengan broker lain
 MQTT_TOPIC = "esp32/sensor"
+<<<<<<< Updated upstream
+=======
 
+
+def send_data(temp, hum):
+    client = MQTTClient("ESP32", MQTT_BROKER)
+    client.connect()
+
+    data = {
+        "temperature": temp,
+        "humidity": hum
+    }
+    
+    json_data = ujson.dumps(data)
+    client.publish(MQTT_TOPIC, json_data)
+    print("Data dikirim:", json_data)
+>>>>>>> Stashed changes
+
+    client.disconnect()
 
 def send_data(temp, hum):
     client = MQTTClient("ESP32", MQTT_BROKER)
@@ -223,3 +247,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+print ('hello world')
+"
