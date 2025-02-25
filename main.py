@@ -10,8 +10,8 @@ from umqtt.simple import MQTTClient
 
 
 # Konfigurasi WiFi
-WIFI_SSID = "Hidden"
-WIFI_PASS = "denivorasya"
+WIFI_SSID = "Balai_diklat"
+WIFI_PASS = "diklat2024!!"
 
 # Konfigurasi Ubidots
 UBIDOTS_TOKEN = "BBUS-7FWNuir6VymmrrgbRLe6E8pYyaYHQZ"
